@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ahin &amp; Suzanne — Wedding Invitation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400&family=Luxurious+Script&family=Pinyon+Script&family=Playball&family=Rouge+Script&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;1,8..60,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { background: #f5f2ed; overflow-x: hidden; }
+
+    /* ══════════════════════════════
+       z:1  Fixed background
+    ══════════════════════════════ */
+    #bg-fixed { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+    #bg-fixed .bg-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover; opacity: 0.4;
+    }
+    #bg-fixed .bg-color { position: absolute; inset: 0; background: #f5f2ed; }
+
+    /* ══════════════════════════════
+       z:5  Scrollable content
+    ══════════════════════════════ */
+    #content {
+      position: relative;
+      width: 885px;
+      height: 2850px; /* extra bottom space so last items scroll above the fixed decoration */
+      margin: 0 auto;
+      z-index: 5;
+    }
+
+    /* ══════════════════════════════
+       z:50  Gradient layers
+       top pinned to top:0
+       bottom pinned to bottom:0
+    ══════════════════════════════ */
+    #top-grad {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 885px; height: 563px;
+      background: linear-gradient(180deg, #f5f2ed 0%, #f5f2ed 48.956%, transparent 100%);
+      z-index: 50; pointer-events: none;
+    }
+    #bottom-grad {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 885px; height: 536px;
+      background: linear-gradient(180deg, transparent 0%, #f5f2ed 51.044%);
+      z-index: 50; pointer-events: none;
+    }
+
+    /* ══════════════════════════════
+       z:55  Scroll-down indicator
+    ══════════════════════════════ */
+    #scroll-down {
+      position: fixed; bottom: 134px; left: 50%; transform: translateX(-50%);
+      width: 406px;
+      display: flex; flex-direction: column; align-items: center; gap: 7px;
+      z-index: 55; pointer-events: none;
+      opacity: 0; transition: opacity 0.7s ease;
+    }
+    #scroll-down.show { opacity: 1; }
+    #scroll-down img { width: 47.485px; height: 23.676px; display: block; }
+    #scroll-down p {
+      font-family: 'Cinzel', serif; font-size: 13px; line-height: 39px;
+      letter-spacing: 2px; color: #1d0e01; opacity: 0.8; text-align: center;
+    }
+
+    /* ══════════════════════════════
+       z:60  Decorations — topmost
+       top pinned to top:0
+       bottom pinned to bottom:0
+    ══════════════════════════════ */
+    #top-deco {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 885px; height: 806px; overflow: hidden;
+      z-index: 60; pointer-events: none;
+    }
+    #top-deco img {
+      position: absolute; top: 0; left: 0;
+      width: 902px; height: 806px; max-width: none;
+    }
+    #bottom-deco {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 885px; height: 629px; overflow: hidden;
+      z-index: 60; pointer-events: none;
+    }
+    #bottom-deco img {
+      position: absolute;
+      width: 103.59%; height: 193.16%;
+      left: -0.04%; top: -93.16%;
+      max-width: none;
+    }
+
+    /* ══════════════════════════════
+       Fade animation
+       — only translateY, no translateX conflict
+       — slow, subtle upward rise
+    ══════════════════════════════ */
+    .fade-el {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 1.8s ease, transform 1.8s ease;
+    }
+    .fade-el.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ══════════════════════════════
+       Text elements
+       All left values pre-computed as (center_x − width/2)
+       so NO translateX() is needed — zero transform conflict.
+
+       Container width = 885px, center = 442.5px.
+       Original Figma centers most elements at 434.5px (8px left of center),
+       matching the "Text group left: -8px" offset.
+    ══════════════════════════════ */
+
+    /* center: 434.5 − 399.421/2 = 234.79 */
+    .text-forever {
+      position: absolute; top: 440px;
+      left: 234.79px; width: 399.421px;
+      font-family: 'Cinzel', serif; font-weight: 400;
+      font-size: 18px; line-height: 39px; letter-spacing: 9px;
+      color: #1d0e01; text-align: center;
+    }
+
+    /* center: 434.02 − 422.386/2 = 222.83 */
+    .text-wedding {
+      position: absolute; top: 515px;
+      left: 222.83px; width: 422.386px;
+      font-family: 'Pinyon Script', cursive;
+      font-size: 61.664px; line-height: 41.672px; letter-spacing: -1.9091px;
+      color: #bd9050; text-align: center;
+    }
+
+    /* same center as text-forever */
+    .text-invite {
+      position: absolute; top: 615px;
+      left: 234.79px; width: 399.421px;
+      font-family: 'Source Serif 4', serif; font-weight: 300; font-style: italic;
+      font-size: 24.41px; line-height: 39px;
+      color: #1d0e01; text-align: center; word-break: break-word;
+    }
+
+    /* dividers: center 434.99 − 614.47/2 = 127.76 */
+    .divider {
+      position: absolute; left: 127.76px;
+      display: block; max-width: none;
+    }
+    .divider-lg { width: 614.47px; height: 57.483px; }
+    .divider-sm { width: 614.47px; height: 24.777px; }
+
+    /* center: 434.66 − 464.919/2 = 202.20 */
+    .text-verse {
+      position: absolute; top: 856px;
+      left: 202.20px; width: 464.919px;
+      font-family: 'Source Serif 4', serif; font-weight: 300; font-style: italic;
+      font-size: 24.41px; line-height: 39px;
+      color: #1d0e01; text-align: center;
+    }
+
+    /* center: 434.5 − 763.202/2 = 52.90 */
+    .text-name-groom {
+      position: absolute; top: 1064.07px;
+      left: 52.90px; width: 763.202px;
+      font-family: 'Rouge Script', cursive;
+      font-size: 111.419px; line-height: 75.297px;
+      color: #bd8754; text-align: center;
+    }
+
+    /* center: 434.5 − 48.13/2 = 410.44 */
+    .text-ampersand {
+      position: absolute; top: 1136.4px;
+      left: 410.44px; width: 48.13px;
+      font-family: 'Playball', cursive;
+      font-size: 61px; line-height: 77.041px;
+      color: #bd8754; text-align: center; overflow: visible;
+    }
+
+    .text-name-bride {
+      position: absolute; top: 1190.32px;
+      left: 52.90px; width: 763.202px;
+      font-family: 'Rouge Script', cursive;
+      font-size: 111.419px; line-height: 75.297px;
+      color: #bd8754; text-align: center;
+    }
+
+    /* center: 434.5 − 869.284/2 = 0 */
+    .text-date-number {
+      position: absolute; top: 1419px;
+      left: 0; width: 869.284px;
+      font-family: 'Cinzel', serif; font-weight: 400;
+      font-size: 129px; line-height: 1;
+      color: #a26131; text-align: center;
+    }
+
+    /* center: 434.5 − 392.328/2 = 238.34 */
+    .text-september {
+      position: absolute; top: 1537px;
+      left: 238.34px; width: 392.328px;
+      font-family: 'Cinzel', serif; font-weight: 400;
+      font-size: 20px; line-height: 39px; letter-spacing: 6px;
+      color: #1d0e01; text-align: center;
+    }
+    .text-year {
+      position: absolute; top: 1568px;
+      left: 238.34px; width: 392.328px;
+      font-family: 'Cinzel', serif; font-weight: 400;
+      font-size: 20px; line-height: 39px; letter-spacing: 6px;
+      color: #1d0e01; text-align: center;
+    }
+
+    /* center: 434.5 − 885/2 = -8 */
+    .text-time {
+      position: absolute; top: 1695px;
+      left: -8px; width: 885px;
+      font-family: 'Cinzel', serif; font-weight: 400;
+      font-size: 40px; line-height: 1;
+      color: #a26131; text-align: center;
+    }
+
+    /* same as text-verse */
+    .text-church {
+      position: absolute; top: 1911px;
+      left: 202.20px; width: 464.919px;
+      font-family: 'Source Serif 4', serif; font-weight: 300; font-style: italic;
+      font-size: 24.41px; line-height: 39px;
+      color: #1d0e01; text-align: center;
+    }
+
+    /* absolute position, no centering needed */
+    .btn-directions {
+      position: absolute; top: 2032px; left: 254.26px; width: 339.856px;
+      display: flex; align-items: center; gap: 20px;
+      padding: 8px 21px;
+      border: 1px solid #bd9050; border-radius: 75px;
+      background: transparent; text-decoration: none; cursor: pointer;
+      transition: background 0.25s ease;
+    }
+    .btn-directions:hover { background: rgba(189,144,80,0.08); }
+    .btn-directions .pin  { width: 12px; height: 20px; flex-shrink: 0; display: block; }
+    .btn-directions span  {
+      font-family: 'Cinzel', serif; font-weight: 400;
+      font-size: 19px; line-height: 39px; letter-spacing: 1px;
+      color: #1d0e01; flex-shrink: 0; white-space: nowrap;
+    }
+    .btn-directions .arrow-wrap {
+      width: 11px; height: 22px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .btn-directions .arrow-wrap img {
+      width: 22px; height: 11px; display: block; transform: rotate(-90deg);
+    }
+
+    /* center: 442.5 − 901/2 = -8 */
+    .text-with-love {
+      position: absolute; top: 2236px;
+      left: -8px; width: 901px;
+      font-family: 'Luxurious Script', cursive;
+      font-size: 53px; line-height: 87.313px;
+      color: #bd8754; text-align: center;
+    }
+
+    /* ══════════════════════════════
+       z:200  Video overlay
+    ══════════════════════════════ */
+    #video-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: #000;
+      transition: opacity 1.2s ease;
+    }
+    #video-overlay.fading { opacity: 0; pointer-events: none; }
+    #intro-video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    /* center: 442.5 − 501/2 = 192 */
+    .text-family {
+      position: absolute; top: 2320px;
+      left: 192px; width: 501px;
+      font-family: 'Cinzel', serif; font-weight: 400;
+      font-size: 29px; line-height: 50px; letter-spacing: 1px;
+      color: #1d0e01; text-align: center; word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- z:200  Video intro -->
+  <div id="video-overlay">
+    <video id="intro-video" src="intro video.mp4" playsinline autoplay></video>
+  </div>
+
+  <!-- Background music (starts after video, fades in) -->
+  <audio id="bg-audio" src="wedding song.mp3" loop></audio>
+
+  <!-- z:1  Fixed background -->
+  <div id="bg-fixed">
+    <img class="bg-img" src="bg.png" alt="">
+    <div class="bg-color"></div>
+  </div>
+
+  <!-- z:5  Scrollable content -->
+  <div id="content">
+
+    <p class="fade-el text-forever">FOREVER</p>
+    <p class="fade-el text-wedding">Wedding</p>
+    <p class="fade-el text-invite">
+      With grateful hearts,<br>
+      we invite you to share in the joy of two hearts brought together in love.
+    </p>
+
+    <img class="fade-el divider divider-lg" style="top:774.26px" src="divider-lg.png" alt="">
+
+    <p class="fade-el text-verse">
+      &ldquo;I have found the one my heart loves.&rdquo;<br>
+      Song of Solomon 3:4
+    </p>
+
+    <img class="fade-el divider divider-sm" style="top:961.11px" src="divider-sm.png" alt="">
+
+    <p class="fade-el text-name-groom">Ahin Thomas Johney</p>
+    <p class="fade-el text-ampersand">&amp;</p>
+    <p class="fade-el text-name-bride">Suzanne Titus</p>
+
+    <img class="fade-el divider divider-sm" style="top:1336.11px" src="divider-sm.png" alt="">
+
+    <p class="fade-el text-date-number">27</p>
+    <p class="fade-el text-september">SEPTEMBER</p>
+    <p class="fade-el text-year">2026</p>
+    <p class="fade-el text-time">AT 11:00 AM</p>
+
+    <img class="fade-el divider divider-sm" style="top:1831.11px" src="divider-sm.png" alt="">
+
+    <p class="fade-el text-church">
+      ST. George&rsquo;s Roman Catholic Church<br>
+      Pallimukku, Kochi, Kerala
+    </p>
+
+    <a class="fade-el btn-directions"
+       href="https://maps.app.goo.gl/AhA5c8zp1msChVjC6"
+       target="_blank" rel="noopener">
+      <img class="pin" src="pin.svg" alt="">
+      <span>DIRECTIONS TO VENUE</span>
+      <div class="arrow-wrap"><img src="arrow.svg" alt=""></div>
+    </a>
+
+    <img class="fade-el divider divider-sm" style="top:2156.22px" src="divider-sm.png" alt="">
+
+    <p class="fade-el text-with-love">With love</p>
+    <p class="fade-el text-family">Parents, Amala, Roseanne, Joanne, Evanne &amp; Richie</p>
+
+  </div>
+
+  <!-- z:50  Gradients -->
+  <div id="top-grad"></div>
+  <div id="bottom-grad"></div>
+
+  <!-- z:55  Scroll-down -->
+  <div id="scroll-down">
+    <img src="scroll.svg" alt="">
+    <p>SCROLL DOWN</p>
+  </div>
+
+  <!-- z:60  Decorations (topmost) -->
+  <div id="top-deco"><img src="top.png" alt="" width="902" height="806"></div>
+  <div id="bottom-deco"><img src="bottom.png" alt=""></div>
+
+  <script>
+    const video    = document.getElementById('intro-video');
+    const overlay  = document.getElementById('video-overlay');
+    const audio    = document.getElementById('bg-audio');
+    const scrollDn = document.getElementById('scroll-down');
+    let audioStarted = false;
+    let revealed     = false;
+
+    /* ── Fade wedding song in from silence (runs once) ── */
+    function fadeInAudio() {
+      if (audioStarted) return;
+      audioStarted = true;
+      audio.currentTime = 0;
+      audio.volume = 0;
+      audio.play().catch(() => {});
+      const step = () => {
+        if (audio.volume < 1) {
+          audio.volume = Math.min(1, audio.volume + 0.02);
+          setTimeout(step, 80); /* ~4 s ramp */
+        }
+      };
+      setTimeout(step, 80);
+    }
+
+    /* ── Reveal invitation content ── */
+    function startReveal() {
+      if (revealed) return;
+      revealed = true;
+
+      overlay.classList.add('fading');
+      setTimeout(() => { overlay.style.display = 'none'; }, 1300);
+
+      /* Wedding song may already be playing; this is a no-op if so */
+      fadeInAudio();
+
+      const els = [...document.querySelectorAll('.fade-el')].sort((a, b) =>
+        parseFloat(window.getComputedStyle(a).top) -
+        parseFloat(window.getComputedStyle(b).top)
+      );
+
+      const inView = [], offScreen = [];
+      els.forEach(el => {
+        const r = el.getBoundingClientRect();
+        (r.top < window.innerHeight - 20 ? inView : offScreen).push(el);
+      });
+
+      inView.forEach((el, i) =>
+        setTimeout(() => el.classList.add('visible'), 500 + i * 160)
+      );
+
+      setTimeout(
+        () => scrollDn.classList.add('show'),
+        500 + inView.length * 160 + 600
+      );
+
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.06 });
+      offScreen.forEach(el => io.observe(el));
+    }
+
+    /* ── Autoplay video at 60% volume; wedding song starts with it ── */
+    video.volume = 0.6;
+    video.play().catch(() => {
+      /* Browser blocked autoplay with sound — try muted as fallback */
+      video.muted = true;
+      video.play().catch(() => startReveal());
+    });
+
+    /* As soon as video actually starts playing, fade in wedding song too */
+    video.addEventListener('playing', () => fadeInAudio(), { once: true });
+
+    /* When video ends, reveal the invitation */
+    video.addEventListener('ended', startReveal);
+
+    /* ── Hide/show scroll-down on scroll ── */
+    window.addEventListener('scroll', () => {
+      if (!revealed) return;
+      scrollDn.classList.toggle('show', window.scrollY <= 80);
+    }, { passive: true });
+  </script>
+</body>
+</html>
