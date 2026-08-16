@@ -246,8 +246,8 @@
     .text-family {
       position: absolute; top: 2065.89px;
       left: 192px; width: 501px;
-      font-family: 'Cinzel', serif; font-weight: 400;
-      font-size: 29px; line-height: 50px; letter-spacing: 1px;
+      font-family: 'Source Serif 4', serif; font-weight: 300; font-style: italic;
+      font-size: 28px; line-height: 39px;
       color: #1d0e01; text-align: center; word-break: break-word;
     }
 
@@ -356,7 +356,7 @@
     <img class="fade-el divider divider-sm" style="top:1902.11px" src="divider-sm.png" alt="">
 
     <p class="fade-el text-with-love">With love</p>
-    <p class="fade-el text-family">Parents, Amala, Roseanne, Joanne, Evanne &amp; Richie</p>
+    <p class="fade-el text-family">Parents, Amala, Roseanne, Joanne,<br>Evanne &amp; Richie</p>
 
   </div>
 
@@ -469,15 +469,10 @@
 
     video.addEventListener('ended', startReveal);
 
-    /* ── Show near top, dissolve at bottom ──
-       getBoundingClientRect() returns visual-px coords relative to the
-       viewport, so it works correctly even with body zoom applied.     */
+    /* ── Hide permanently on first scroll ── */
     window.addEventListener('scroll', () => {
       if (!revealed) return;
-      const r        = document.body.getBoundingClientRect();
-      const nearTop  = r.top  > -60;                        /* body top within 60px above viewport */
-      const atBottom = r.bottom <= window.innerHeight + 60; /* body bottom within 60px of viewport */
-      scrollDn.classList.toggle('show', nearTop && !atBottom);
+      if (window.scrollY > 0) scrollDn.classList.remove('show');
     }, { passive: true });
   </script>
 </body>
