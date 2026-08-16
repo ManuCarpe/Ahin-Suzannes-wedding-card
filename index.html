@@ -30,7 +30,7 @@
     #content {
       position: relative;
       width: 885px;
-      height: 2850px;
+      height: 2508px;
       margin: 0 auto;
       z-index: 5;
     }
@@ -255,17 +255,22 @@
        z:200  Video overlay
     ══════════════════════════════ */
     #video-overlay {
-      position: fixed; inset: 0; z-index: 200;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh; height: 100dvh; /* dvh handles mobile browser chrome */
+      z-index: 200;
       background: #000; cursor: pointer;
       transition: opacity 1.2s ease;
     }
     #video-overlay.fading { opacity: 0; pointer-events: none; }
     #intro-video {
-      position: absolute; top: 50%; left: 50%;
-      min-width: 100%; min-height: 100%;
-      width: auto; height: auto;
-      transform: translate(-50%, -50%);
-      object-fit: cover;
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      height: 100%;   /* fills top-to-bottom exactly */
+      width: auto;    /* natural aspect-ratio width */
+      min-width: 100%; /* never narrower than the container */
     }
     /* Full-screen tap target — subtle pulse guides the user to tap */
     #tap-pulse {
@@ -464,10 +469,15 @@
 
     video.addEventListener('ended', startReveal);
 
-    /* ── Hide scroll-down after user scrolls (threshold scaled to screen px) ── */
+    /* ── Show near top, dissolve at bottom ──
+       getBoundingClientRect() returns visual-px coords relative to the
+       viewport, so it works correctly even with body zoom applied.     */
     window.addEventListener('scroll', () => {
       if (!revealed) return;
-      scrollDn.classList.toggle('show', window.scrollY <= 80 / zoom);
+      const r        = document.body.getBoundingClientRect();
+      const nearTop  = r.top  > -60;                        /* body top within 60px above viewport */
+      const atBottom = r.bottom <= window.innerHeight + 60; /* body bottom within 60px of viewport */
+      scrollDn.classList.toggle('show', nearTop && !atBottom);
     }, { passive: true });
   </script>
 </body>
