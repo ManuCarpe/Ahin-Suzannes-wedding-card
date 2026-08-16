@@ -400,7 +400,7 @@
       if (audioStarted) return;
       audioStarted = true;
       audio.currentTime = 0;
-      audio.volume = 0;
+      audio.volume = 0.05; /* non-zero so iOS doesn't skip it */
       audio.play().catch(() => {});
       const step = () => {
         if (audio.volume < 1) {
@@ -459,10 +459,13 @@
 
     overlay.addEventListener('click', () => {
       tapPulse.style.display = 'none';
-      video.muted = false;
-      /* If muted autoplay also failed, play now with sound */
-      if (video.paused) video.play().catch(() => startReveal());
+      /* Audio must claim the user gesture before any video call */
       fadeInAudio();
+      /* Unmute video — removeAttribute needed on iOS in addition to property */
+      video.removeAttribute('muted');
+      video.muted = false;
+      video.volume = 0.6;
+      if (video.paused) video.play().catch(() => startReveal());
     }, { once: true });
 
     video.addEventListener('ended', startReveal);
