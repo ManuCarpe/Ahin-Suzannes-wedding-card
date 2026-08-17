@@ -298,7 +298,7 @@
   </div>
 
   <!-- Background music -->
-  <audio id="bg-audio" src="wedding song.mp3" loop></audio>
+  <audio id="bg-audio" src="wedding song.mp3" loop preload="auto"></audio>
 
   <!-- z:1  Fixed background -->
   <div id="bg-fixed">
@@ -459,9 +459,15 @@
 
     overlay.addEventListener('click', () => {
       tapPulse.style.display = 'none';
-      /* Audio must claim the user gesture before any video call */
+      /* Unlock WebKit audio engine — iOS Safari requires AudioContext.resume()
+         to be called synchronously inside a user gesture before any play() */
+      try {
+        const _ctx = new (window.AudioContext || window.webkitAudioContext)();
+        _ctx.resume();
+      } catch(e) {}
+      /* Audio first — must be synchronous in the gesture handler */
       fadeInAudio();
-      /* Unmute video — removeAttribute needed on iOS in addition to property */
+      /* Unmute video — removeAttribute needed on iOS alongside property */
       video.removeAttribute('muted');
       video.muted = false;
       video.volume = 0.6;
