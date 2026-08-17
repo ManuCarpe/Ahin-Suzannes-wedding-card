@@ -293,12 +293,12 @@
 
   <!-- z:200  Video intro — moved to <html> root via JS to escape body zoom -->
   <div id="video-overlay">
-    <video id="intro-video" src="intro video.mp4" playsinline autoplay muted></video>
+    <video id="intro-video" src="intro-video.mp4" playsinline autoplay muted></video>
     <div id="tap-pulse"></div>
   </div>
 
   <!-- Background music -->
-  <audio id="bg-audio" src="wedding song.mp3" loop preload="auto"></audio>
+  <audio id="bg-audio" src="wedding-song.mp3" loop preload="auto"></audio>
 
   <!-- z:1  Fixed background -->
   <div id="bg-fixed">
@@ -389,18 +389,19 @@
     const scrollDn = document.getElementById('scroll-down');
     let audioStarted = false;
     let revealed     = false;
+    let tapped       = false; /* gate: wedding song never plays without user tap */
 
     /* ── Move overlay to <html> root so it escapes body zoom and always
        covers the true viewport — position:fixed;inset:0 then uses real
        CSS viewport coords, not the scaled body coordinate space.       ── */
     document.documentElement.appendChild(overlay);
 
-    /* ── Fade wedding song from silence (runs once) ── */
+    /* ── Fade wedding song from silence (runs once, requires tap) ── */
     function fadeInAudio() {
-      if (audioStarted) return;
+      if (!tapped || audioStarted) return;
       audioStarted = true;
       audio.currentTime = 0;
-      audio.volume = 0.05; /* non-zero so iOS doesn't skip it */
+      audio.volume = 0.05;
       audio.play().catch(() => {});
       const step = () => {
         if (audio.volume < 1) {
@@ -419,7 +420,7 @@
       overlay.classList.add('fading');
       setTimeout(() => { overlay.style.display = 'none'; }, 1300);
 
-      fadeInAudio(); /* no-op if already started */
+      fadeInAudio(); /* no-op if not tapped or already started */
 
       const els = [...document.querySelectorAll('.fade-el')].sort((a, b) =>
         parseFloat(window.getComputedStyle(a).top) -
@@ -452,26 +453,37 @@
       offScreen.forEach(el => io.observe(el));
     }
 
-    /* ── Video plays muted on load (browser allows muted autoplay).
-       The pulse ring on screen prompts the user to tap anywhere.
-       On first tap: unmute video (60% vol) + fade in wedding song. ── */
-    video.volume = 0.6;
+    /* ── Video autoplays muted (all browsers allow this).
+       Pulse ring prompts the user to tap.
+       On tap: unlock audio engine, play wedding song, restart video with audio. ── */
 
     overlay.addEventListener('click', () => {
+      tapped = true;
       tapPulse.style.display = 'none';
-      /* Unlock WebKit audio engine — iOS Safari requires AudioContext.resume()
-         to be called synchronously inside a user gesture before any play() */
+
+      /* Unlock WebKit audio engine — iOS Safari needs AudioContext.resume()
+         called synchronously inside the gesture before any media.play() */
       try {
         const _ctx = new (window.AudioContext || window.webkitAudioContext)();
         _ctx.resume();
       } catch(e) {}
-      /* Audio first — must be synchronous in the gesture handler */
+
+      /* Wedding song — must be first to claim the user gesture token */
       fadeInAudio();
-      /* Unmute video — removeAttribute needed on iOS alongside property */
+
+      /* Intro video with audio — pause, strip muted, replay from gesture.
+         Replaying from the user gesture allows audio on all browsers incl. iOS. */
+      const resumeTime = video.currentTime;
+      video.pause();
       video.removeAttribute('muted');
       video.muted = false;
       video.volume = 0.6;
-      if (video.paused) video.play().catch(() => startReveal());
+      video.currentTime = resumeTime;
+      video.play().catch(() => {
+        /* If audio play fails (e.g. very restrictive browser), replay muted */
+        video.muted = true;
+        video.play().catch(() => startReveal());
+      });
     }, { once: true });
 
     video.addEventListener('ended', startReveal);
